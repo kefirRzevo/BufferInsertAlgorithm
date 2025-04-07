@@ -3,7 +3,7 @@
 
 using namespace algo;
 
-void Config::read(std::istream& Is) {
+void Config::read(std::istream &Is) {
   auto DataObj = nlohmann::json{};
   Is >> DataObj;
   assert(DataObj.is_object());
@@ -29,11 +29,11 @@ void Config::read(std::istream& Is) {
   assert(InputObj.contains("intrinsic_delay"));
   auto KFloat = InputObj["intrinsic_delay"];
   auto Mod = Module{
-    Kind,
-    NameStr.template get<std::string>(),
-    RFloat.template get<Module::FloatTy>(),
-    CFloat.template get<Module::FloatTy>(),
-    KFloat.template get<Module::FloatTy>(),
+      .Kind = Kind,
+      .Name = NameStr.template get<std::string>(),
+      .R = RFloat.template get<Module::FloatTy>(),
+      .C = CFloat.template get<Module::FloatTy>(),
+      .K = KFloat.template get<Module::FloatTy>(),
   };
   Modules.emplace(Kind, std::move(Mod));
 
@@ -49,9 +49,11 @@ void Config::read(std::istream& Is) {
   assert(TechObj.contains("unit_wire_capacitance_comment0"));
   auto UnitWireCCommentStr = TechObj["unit_wire_capacitance_comment0"];
   Tech = Technology{
-    UnitWireRFloat.template get<Technology::FloatTy>(),
-    UnitWireCFloat.template get<Technology::FloatTy>(),
-    UnitWireRCommentStr.template get<std::string>(),
-    UnitWireCCommentStr.template get<std::string>(),
+      .UnitR = UnitWireRFloat.template get<Technology::FloatTy>(),
+      .UnitC = UnitWireCFloat.template get<Technology::FloatTy>(),
+      .UnitRComment =
+          UnitWireCCommentStr.template get<std::string>(),
+      .UnitCComment =
+          UnitWireRCommentStr.template get<std::string>(),
   };
 }

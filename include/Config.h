@@ -26,10 +26,10 @@ struct Module {
 struct Technology final {
   using FloatTy = float;
 
-  FloatTy UnitWireResistance;
-  FloatTy UnitWireCapacitance;
-  std::string UnitWireResistanceComment;
-  std::string UnitWireCapacitanceComment;
+  FloatTy UnitR;
+  FloatTy UnitC;
+  std::string UnitRComment;
+  std::string UnitCComment;
 };
 
 class Config final {
