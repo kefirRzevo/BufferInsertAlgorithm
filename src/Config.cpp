@@ -36,7 +36,6 @@ void Config::read(std::istream &Is) {
       .K = KFloat.template get<Module::FloatTy>(),
   };
   Modules.emplace(Kind, std::move(Mod));
-
   assert(DataObj.contains("technology"));
   auto TechObj = DataObj["technology"];
   assert(TechObj.is_object());
@@ -51,9 +50,7 @@ void Config::read(std::istream &Is) {
   Tech = Technology{
       .UnitR = UnitWireRFloat.template get<Technology::FloatTy>(),
       .UnitC = UnitWireCFloat.template get<Technology::FloatTy>(),
-      .UnitRComment =
-          UnitWireCCommentStr.template get<std::string>(),
-      .UnitCComment =
-          UnitWireRCommentStr.template get<std::string>(),
+      .UnitRComment = UnitWireCCommentStr.template get<std::string>(),
+      .UnitCComment = UnitWireRCommentStr.template get<std::string>(),
   };
 }

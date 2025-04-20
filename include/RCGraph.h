@@ -1,11 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <span>
 #include <vector>
-#include <algorithm>
 
 namespace algo {
 
@@ -72,42 +73,43 @@ struct RCGraphInterface {
 
   virtual EdgeIdTy getParent(NodeIdTy NId) const = 0;
 
-  virtual EdgeIdTy getLHS(NodeIdTy NId) const = 0;
+  virtual const std::vector<EdgeIdTy> &getChildren(NodeIdTy NId) const = 0;
 
-  virtual EdgeIdTy getRHS(NodeIdTy NId) const = 0;
+  virtual void setRoot(NodeIdTy NId) = 0;
 
   virtual NodeIdTy getRoot() const = 0;
 
   virtual void removeNode(NodeIdTy NId) = 0;
 
   virtual void removeEdge(EdgeIdTy EId) = 0;
-
-  virtual void dump(std::ostream& OS) const = 0;
 };
 
-class RCGraph final: private RCGraphInterface {
+class RCGraph final : private RCGraphInterface {
+public:
   using CoordTy = RCGraphInterface::CoordTy;
   using NodeIdTy = RCGraphInterface::NodeIdTy;
   using FloatTy = RCGraphInterface::FloatTy;
   using EdgeIdTy = RCGraphInterface::EdgeIdTy;
+  using RCGraphInterface::invalidNodeId;
+  using RCGraphInterface::invalidEdgeId;
 
+private:
   class NodeEntryTy final {
     EdgeIdTy Parent;
-    EdgeIdTy LHS;
-    EdgeIdTy RHS;
+    std::vector<EdgeIdTy> Children;
 
   public:
     NodeEntryTy(NodeTy &&Node)
-        : Parent(invalidEdgeId()), LHS(invalidEdgeId()), RHS(invalidEdgeId()),
-          Node(std::move(Node)) {}
+        : Parent(invalidEdgeId()), Children({}), Node(std::move(Node)) {}
 
     void setParent(EdgeIdTy P) { Parent = P; }
-    void setLHS(EdgeIdTy L) { LHS = L; }
-    void setRHS(EdgeIdTy R) { RHS = R; }
+    void addChild(EdgeIdTy EId) { Children.push_back(EId); }
+    void removeChild(EdgeIdTy EId) {
+      Children.erase(std::remove(Children.begin(), Children.end(), EId));
+    }
 
     EdgeIdTy getParent() const { return Parent; }
-    EdgeIdTy getLHS() const { return LHS; }
-    EdgeIdTy getRHS() const { return RHS; }
+    const std::vector<EdgeIdTy> &getChildren() const { return Children; }
 
     NodeTy Node;
   };
@@ -120,28 +122,19 @@ class RCGraph final: private RCGraphInterface {
     EdgeEntryTy(NodeIdTy First, NodeIdTy Last, EdgeTy &&Edge)
         : First(First), Last(Last), Edge(std::move(Edge)) {}
 
-    void connectAsLHS(RCGraph &G, EdgeIdTy ThisEdgeId) {
-      NodeEntryTy &NH = G.getNodeEntry(First);
-      NH.setLHS(ThisEdgeId);
+    void connect(RCGraph &G, EdgeIdTy ThisEdgeId) {
+      NodeEntryTy &NF = G.getNodeEntry(First);
+      assert(!isConnected(G, ThisEdgeId) && "Edge exists");
+      NF.addChild(ThisEdgeId);
       NodeEntryTy &NL = G.getNodeEntry(Last);
       NL.setParent(ThisEdgeId);
     }
 
-    void connectAsRHS(RCGraph &G, EdgeIdTy ThisEdgeId) {
-      NodeEntryTy &NH = G.getNodeEntry(First);
-      NH.setRHS(ThisEdgeId);
-      NodeEntryTy &NL = G.getNodeEntry(Last);
-      NL.setParent(ThisEdgeId);
-    }
-
-    bool isLHS(RCGraph& G, EdgeIdTy ThisEdgeId) const {
-      NodeEntryTy &NH = G.getNodeEntry(First);
-      return NH.getLHS() == ThisEdgeId;
-    }
-
-    bool isRHS(RCGraph& G, EdgeIdTy ThisEdgeId) const {
-      NodeEntryTy &NH = G.getNodeEntry(First);
-      return NH.getRHS() == ThisEdgeId;
+    bool isConnected(RCGraph &G, EdgeIdTy ThisEdgeId) const {
+      NodeEntryTy &NF = G.getNodeEntry(First);
+      const std::vector<EdgeIdTy> &Children = NF.getChildren();
+      return std::find(Children.begin(), Children.end(), ThisEdgeId) !=
+             Children.end();
     }
 
     NodeIdTy getFirst() const { return First; }
@@ -204,30 +197,19 @@ class RCGraph final: private RCGraphInterface {
       Edges.push_back(std::move(EE));
     }
     EE = getEdgeEntry(EId);
-    NodeIdTy FirstId = EE.getFirst();
-    const NodeEntryTy& FNE = getNodeEntry(FirstId);
-    if (FNE.getLHS() == invalidNodeId()) {
-      EE.connectAsLHS(*this, EId);
-    } else if (FNE.getRHS() == invalidNodeId()) {
-      EE.connectAsRHS(*this, EId);
-    } else {
-      assert("Attempt to add duplicate edge.");
-    }
+    assert(!EE.isConnected(*this, EId) && "Attempt to add duplicate edge");
+    EE.connect(*this, EId);
     return EId;
   }
 
 public:
-  NodeTy &getNode(NodeIdTy Id) override {
-    return Nodes.at(Id).Node;
-  }
+  NodeTy &getNode(NodeIdTy Id) override { return Nodes.at(Id).Node; }
 
   const NodeTy &getNode(NodeIdTy Id) const override {
     return Nodes.at(Id).Node;
   }
 
-  EdgeTy &getEdge(EdgeIdTy Id) override {
-    return Edges.at(Id).Edge;
-  }
+  EdgeTy &getEdge(EdgeIdTy Id) override { return Edges.at(Id).Edge; }
 
   const EdgeTy &getEdge(EdgeIdTy Id) const override {
     return Edges.at(Id).Edge;
@@ -239,7 +221,8 @@ public:
   }
 
   EdgeIdTy addEdge(NodeIdTy First, NodeIdTy Last, EdgeTy &&Edge) override {
-    EdgeIdTy EId = addConstructedEdge(EdgeEntryTy(First, Last, std::move(Edge)));
+    EdgeIdTy EId =
+        addConstructedEdge(EdgeEntryTy(First, Last, std::move(Edge)));
     return EId;
   }
 
@@ -255,29 +238,23 @@ public:
     return getNodeEntry(NId).getParent();
   }
 
-  EdgeIdTy getLHS(NodeIdTy NId) const override {
-    return getNodeEntry(NId).getLHS();
+  const std::vector<EdgeIdTy> &getChildren(NodeIdTy NId) const override {
+    return getNodeEntry(NId).getChildren();
   }
 
-  EdgeIdTy getRHS(NodeIdTy NId) const override {
-    return getNodeEntry(NId).getRHS();
-  }
+  void setRoot(NodeIdTy NId) override { Root = NId; }
 
   NodeIdTy getRoot() const override { return Root; }
 
   void removeNode(NodeIdTy NId) override {
-    NodeEntryTy &N = getNodeEntry(NId);
-    EdgeIdTy LHSId = N.getLHS();
-    if (LHSId != invalidEdgeId()) {
-      removeEdge(LHSId);
-    }
-    EdgeIdTy RHSId = N.getRHS();
-    if (RHSId != invalidEdgeId()) {
-      removeEdge(RHSId);
-    }
-    EdgeIdTy ParentId = N.getParent();
+    NodeEntryTy &NE = getNodeEntry(NId);
+    EdgeIdTy ParentId = NE.getParent();
     if (ParentId != invalidEdgeId()) {
       removeEdge(ParentId);
+    }
+    const std::vector<EdgeIdTy> Children = NE.getChildren();
+    for (EdgeIdTy EId : Children) {
+      removeEdge(EId);
     }
     FreeNodeIds.push_back(NId);
     std::sort(FreeNodeIds.begin(), FreeNodeIds.end());
@@ -286,44 +263,20 @@ public:
   void removeEdge(EdgeIdTy EId) override {
     EdgeEntryTy &E = getEdgeEntry(EId);
     NodeIdTy First = E.getFirst();
-    NodeEntryTy& FNE = getNodeEntry(First);
-    if (E.isLHS(*this, EId)) {
-      FNE.setLHS(invalidEdgeId());
-    }
-    if (E.isRHS(*this, EId)) {
-      FNE.setRHS(invalidEdgeId());
-    }
+    NodeEntryTy &FNE = getNodeEntry(First);
+    FNE.removeChild(EId);
     NodeIdTy Last = E.getLast();
-    NodeEntryTy& LNE = getNodeEntry(Last);
+    NodeEntryTy &LNE = getNodeEntry(Last);
     LNE.setParent(invalidEdgeId());
     FreeEdgeIds.push_back(EId);
     std::sort(FreeEdgeIds.begin(), FreeEdgeIds.end());
   }
-
-  void dump(std::ostream& OS) const override {
-    OS << "digraph {\n";
-    OS << "\trankdir=LR;\n";
-    OS << "\tnode[style=filled, fontcolor=black];\n";
-    for (NodeIdTy NId = NodeIdTy{}; NId != Nodes.size(); ++NId) {
-      if (std::binary_search(FreeNodeIds.begin(), FreeNodeIds.end(), NId)) {
-        continue;
-      }
-      //const NodeEntryTy& NE = Nodes[NId];
-      OS << "\tnode_" << NId << "[label = \"Id " << NId << "\"];\n";
-    }
-    for (EdgeIdTy EId = EdgeIdTy{}; EId != Edges.size(); ++EId) {
-      if (std::binary_search(FreeEdgeIds.begin(), FreeEdgeIds.end(), EId)) {
-        continue;
-      }
-      const EdgeEntryTy& EE = Edges[EId];
-      NodeIdTy First = EE.getFirst();
-      NodeIdTy Last = EE.getLast();
-      OS << "\tnode_" << First << " -> node_" << Last << ";\n";
-    }
-    OS << "}" << std::endl;
-  }
 };
 
 RCGraph read(std::istream &IS);
+
+void dumpDot(const RCGraph &G, std::ostream &OS);
+
+void write(const RCGraph &G, std::ostream &OS);
 
 } // namespace algo
