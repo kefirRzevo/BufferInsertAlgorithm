@@ -21,6 +21,11 @@ struct PointTy final {
 
   CoordTy X;
   CoordTy Y;
+
+  PointTy(CoordTy x, CoordTy y) : X{x}, Y{y} {}
+  bool operator==(const PointTy &rhs) {
+    return X == rhs.X && Y == rhs.Y;
+  }
 };
 
 struct NodeTy {
@@ -90,8 +95,8 @@ public:
   using NodeIdTy = RCGraphInterface::NodeIdTy;
   using FloatTy = RCGraphInterface::FloatTy;
   using EdgeIdTy = RCGraphInterface::EdgeIdTy;
-  using RCGraphInterface::invalidNodeId;
   using RCGraphInterface::invalidEdgeId;
+  using RCGraphInterface::invalidNodeId;
 
 private:
   class NodeEntryTy final {

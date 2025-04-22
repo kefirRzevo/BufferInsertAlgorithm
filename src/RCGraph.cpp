@@ -70,8 +70,8 @@ RCGraph read(std::istream &IS) {
       NodeRATFloat = NodeRAT.template get<FloatTy>();
     }
     auto Point = PointTy{
-        .X = NodeX.template get<CoordTy>(),
-        .Y = NodeY.template get<CoordTy>(),
+        NodeX.template get<CoordTy>(),
+        NodeY.template get<CoordTy>(),
     };
     auto Node = NodeTy{
         .Kind = NodeKind,
@@ -111,8 +111,8 @@ RCGraph read(std::istream &IS) {
       auto XStr = EdgeSegmentArr[0];
       auto YStr = EdgeSegmentArr[1];
       auto Point = PointTy{
-          .X = XStr.template get<CoordTy>(),
-          .Y = YStr.template get<CoordTy>(),
+        XStr.template get<CoordTy>(),
+        YStr.template get<CoordTy>(),
       };
       Points.push_back(std::move(Point));
     }
