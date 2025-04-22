@@ -4,6 +4,8 @@
 #include <fstream>
 #include <filesystem>
 
+#include "BufferAlgorithm.h"
+
 using namespace algo;
 
 static std::string getOutputFilePath(std::string_view Input) {
@@ -32,6 +34,12 @@ int main(int argc, const char *argv[]) {
     auto OutputPath = getOutputFilePath(TestFile);
     std::ofstream OS{OutputPath};
     write(G, OS);
+
+    auto solution = BufferInsertion(G, Cfg);
+    for (auto &candidate : solution)
+      std::cout << candidate << "\n";
+    std::cout << std::endl;
+    
     return 0;
   } catch (const std::exception &e) {
     std::cerr << e.what() << std::endl;
