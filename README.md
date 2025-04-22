@@ -9,3 +9,15 @@ To build program:
         cmake -S . -B build
         cmake --build build
 ```
+
+## Results
+
+Plot RAT(Length):
+
+![plot](./res/delay.png)
+
+Plot Time(Length):
+
+![plot](./res/runtime.png)
+
+Results are nice.

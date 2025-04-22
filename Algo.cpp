@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <chrono>
 
 using namespace algo;
 
@@ -30,6 +31,8 @@ static NodeTy::FloatTy resultingRAT(const SolutionTy &Solution) {
 }
 
 int main(int argc, const char *argv[]) {
+  using namespace std::chrono;
+
   try {
     if (argc != 3) {
       throw std::runtime_error("Usage: " + std::string(argv[0]) +
@@ -41,16 +44,18 @@ int main(int argc, const char *argv[]) {
     std::string TestFile = argv[2];
     std::ifstream TestIS{TestFile};
     auto G = readRCGraph(TestIS);
-
+    auto start = high_resolution_clock::now();
     auto Candidates = bufferInsertion(G, Cfg);
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(end - start);
     auto Solution = extractSolution(Candidates);
     for (auto &&Candidate : Solution) {
       std::cout << Candidate << "\n";
     }
     std::cout << std::endl;
-
     NodeTy::FloatTy RAT = resultingRAT(Candidates);
     std::cout << "Resulting RAT = " << RAT << std::endl;
+    std::cout << "Resulting AlgoTime = " << duration.count() << std::endl;
 
     insertSolution(Solution, G);
     auto OutputPath = getOutputFilePath(TestFile);
