@@ -89,7 +89,7 @@ def get_results(n: int = 12) -> list[TestResult]:
     test_results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
         futures = {
-            executor.submit(get_result, length): length for length in range(1, max_len)
+            executor.submit(get_result, length): length for length in range(1, max_len, 100)
         }
         for future in concurrent.futures.as_completed(futures):
             try:

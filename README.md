@@ -12,12 +12,6 @@ To build program:
 
 ## Results
 
-Plot RAT(Length):
-
-![plot](./res/delay.png)
-
-Plot Time(Length):
-
-![plot](./res/runtime.png)
+![plot](./res/results.png)
 
 Results are nice.
