@@ -23,10 +23,15 @@ struct PointTy final {
   CoordTy Y;
 
   PointTy(CoordTy x, CoordTy y) : X{x}, Y{y} {}
-  bool operator==(const PointTy &rhs) {
-    return X == rhs.X && Y == rhs.Y;
+
+  bool operator==(const PointTy &rhs) const { return X == rhs.X && Y == rhs.Y; }
+
+  unsigned distance(const PointTy &rhs) const {
+    return std::abs(X - rhs.X) + std::abs(Y - rhs.Y);
   }
 };
+
+using PointsTy = std::vector<PointTy>;
 
 struct NodeTy {
   using NodeIdTy = unsigned;
@@ -43,7 +48,7 @@ struct NodeTy {
 struct EdgeTy {
   using EdgeIdTy = unsigned;
 
-  std::vector<PointTy> Ps;
+  PointsTy Ps;
 };
 
 struct RCGraphInterface {
@@ -278,10 +283,10 @@ public:
   }
 };
 
-RCGraph read(std::istream &IS);
+RCGraph readRCGraph(std::istream &IS);
 
 void dumpDot(const RCGraph &G, std::ostream &OS);
 
-void write(const RCGraph &G, std::ostream &OS);
+void writeRCGraph(const RCGraph &G, std::ostream &OS);
 
 } // namespace algo

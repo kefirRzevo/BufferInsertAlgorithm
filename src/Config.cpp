@@ -1,9 +1,10 @@
 #include "Config.h"
 #include "JSON.h"
 
-using namespace algo;
+namespace algo {
 
-void Config::read(std::istream &Is) {
+Config readConfig(std::istream &Is) {
+  Config Cfg;
   auto DataObj = nlohmann::json{};
   Is >> DataObj;
   assert(DataObj.is_object());
@@ -35,7 +36,7 @@ void Config::read(std::istream &Is) {
       .C = CFloat.template get<Module::FloatTy>(),
       .K = KFloat.template get<Module::FloatTy>(),
   };
-  Modules.emplace(Kind, std::move(Mod));
+  Cfg.addModule(Kind, std::move(Mod));
   assert(DataObj.contains("technology"));
   auto TechObj = DataObj["technology"];
   assert(TechObj.is_object());
@@ -47,10 +48,14 @@ void Config::read(std::istream &Is) {
   auto UnitWireCFloat = TechObj["unit_wire_capacitance"];
   assert(TechObj.contains("unit_wire_capacitance_comment0"));
   auto UnitWireCCommentStr = TechObj["unit_wire_capacitance_comment0"];
-  Tech = Technology{
+  auto Tech = Technology{
       .UnitR = UnitWireRFloat.template get<Technology::FloatTy>(),
       .UnitC = UnitWireCFloat.template get<Technology::FloatTy>(),
       .UnitRComment = UnitWireCCommentStr.template get<std::string>(),
       .UnitCComment = UnitWireRCommentStr.template get<std::string>(),
   };
+  Cfg.setTechnology(std::move(Tech));
+  return Cfg;
 }
+
+} // namespace algo

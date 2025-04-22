@@ -37,9 +37,13 @@ class Config final {
   Technology Tech;
 
 public:
-  void read(std::istream &Is);
+  void setTechnology(Technology &&T) { Tech = std::move(T); }
 
   const Technology &getTechnology() const { return Tech; }
+
+  void addModule(ModuleKind Kind, Module &&M) {
+    Modules.emplace(Kind, std::move(M));
+  }
 
   const Module &getModule(ModuleKind Kind) const {
     auto Found = Modules.find(Kind);
@@ -49,5 +53,7 @@ public:
     return Found->second;
   }
 };
+
+Config readConfig(std::istream &Is);
 
 } // namespace algo

@@ -30,7 +30,7 @@ static NodeKindTy fromString(std::string_view S) {
   }
 }
 
-RCGraph read(std::istream &IS) {
+RCGraph readRCGraph(std::istream &IS) {
   using CoordTy = RCGraphInterface::CoordTy;
   using NodeIdTy = RCGraphInterface::NodeIdTy;
   using FloatTy = RCGraphInterface::FloatTy;
@@ -104,15 +104,15 @@ RCGraph read(std::istream &IS) {
     assert(EdgeObj.contains("segments"));
     auto EdgeSegmentsArr = EdgeObj["segments"];
     assert(EdgeSegmentsArr.is_array());
-    auto Points = std::vector<PointTy>{};
+    auto Points = PointsTy{};
     for (auto &&EdgeSegmentArr : EdgeSegmentsArr) {
       assert(EdgeSegmentArr.is_array());
       assert(EdgeSegmentArr.size() == 2);
       auto XStr = EdgeSegmentArr[0];
       auto YStr = EdgeSegmentArr[1];
       auto Point = PointTy{
-        XStr.template get<CoordTy>(),
-        YStr.template get<CoordTy>(),
+          XStr.template get<CoordTy>(),
+          YStr.template get<CoordTy>(),
       };
       Points.push_back(std::move(Point));
     }
@@ -127,7 +127,9 @@ static void collect(const RCGraph &G, std::vector<RCGraph::NodeIdTy> &NIds,
   using NodeIdTy = RCGraphInterface::NodeIdTy;
 
   std::vector<NodeIdTy> CurNIds;
-  CurNIds.push_back(G.getRoot());
+  NodeIdTy Root = G.getRoot();
+  CurNIds.push_back(Root);
+  NIds.push_back(Root);
   while (!CurNIds.empty()) {
     NodeIdTy NId = CurNIds.back();
     CurNIds.pop_back();
@@ -151,7 +153,7 @@ static void printNode(const RCGraph &G, RCGraph::NodeIdTy NId,
         "{" + std::to_string(P.X) + ", " + std::to_string(P.Y) + "}";
     return Res;
   };
-  auto PrintPoints = [&](const std::vector<PointTy> &Ps) {
+  auto PrintPoints = [&](const PointsTy &Ps) {
     std::string Res = "[";
     for (auto &&P : Ps) {
       Res += PrintPoint(P);
@@ -186,7 +188,7 @@ void dumpDot(const RCGraph &G, std::ostream &OS) {
   OS << "}" << std::endl;
 }
 
-void write(const RCGraph &G, std::ostream &OS) {
+void writeRCGraph(const RCGraph &G, std::ostream &OS) {
   using NodeIdTy = RCGraph::NodeIdTy;
   using EdgeIdTy = RCGraph::EdgeIdTy;
 
@@ -194,7 +196,7 @@ void write(const RCGraph &G, std::ostream &OS) {
   std::vector<EdgeIdTy> EIds;
   collect(G, NIds, EIds);
   auto DataObj = nlohmann::json{};
-  auto& NodesArr = DataObj["node"];
+  auto &NodesArr = DataObj["node"];
   for (NodeIdTy NId : NIds) {
     const NodeTy &Node = G.getNode(NId);
     auto NodeObj = nlohmann::json{};
@@ -209,7 +211,7 @@ void write(const RCGraph &G, std::ostream &OS) {
     }
     NodesArr.push_back(std::move(NodeObj));
   }
-  auto& EdgesArr = DataObj["edge"];
+  auto &EdgesArr = DataObj["edge"];
   for (EdgeIdTy EId : EIds) {
     const EdgeTy &Edge = G.getEdge(EId);
     NodeIdTy First = G.getEdgeNodeFirst(EId);
