@@ -1,8 +1,8 @@
 
 #include "BufferAlgorithm.h"
-#include "SolutionInsertion.h"
 #include "Config.h"
 #include "RCGraph.h"
+#include "SolutionInsertion.h"
 
 #include <filesystem>
 #include <fstream>
@@ -25,6 +25,10 @@ static SolutionTy extractSolution(const SolutionTy &Candidates) {
   return Solution;
 }
 
+static NodeTy::FloatTy resultingRAT(const SolutionTy &Solution) {
+  return Solution.back().RAT;
+}
+
 int main(int argc, const char *argv[]) {
   try {
     if (argc != 3) {
@@ -37,14 +41,17 @@ int main(int argc, const char *argv[]) {
     std::string TestFile = argv[2];
     std::ifstream TestIS{TestFile};
     auto G = readRCGraph(TestIS);
+
     auto Candidates = bufferInsertion(G, Cfg);
     auto Solution = extractSolution(Candidates);
     for (auto &&Candidate : Solution) {
       std::cout << Candidate << "\n";
     }
-    if (!Solution.empty()) {
-      std::cout << std::endl;
-    }
+    std::cout << std::endl;
+
+    NodeTy::FloatTy RAT = resultingRAT(Candidates);
+    std::cout << "Resulting RAT = " << RAT << std::endl;
+
     insertSolution(Solution, G);
     auto OutputPath = getOutputFilePath(TestFile);
     std::ofstream OS{OutputPath};
