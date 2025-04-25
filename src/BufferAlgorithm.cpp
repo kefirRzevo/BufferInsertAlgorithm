@@ -4,6 +4,29 @@
 
 using namespace algo;
 
+#if DEBUG
+
+#define LOG(...) fprintf(stderr, __VA_ARGS__)
+#define LOG_NODE(node, solutions)                                              \
+  do {                                                                         \
+    auto best_solution =                                                       \
+        std::max_element(solutions.begin(), solutions.end(),                   \
+                         [](const auto &lhs, const auto &rhs) {                \
+                           return lhs.back().RAT < rhs.back().RAT;             \
+                         });                                                   \
+    LOG("[DEBUG] Visiting Node %s (%d, %d):\n\tOptimal RAT = %lf\n\tCapacity " \
+        "= %lf\n\n",                                                           \
+        node.Name.c_str(), node.P.X, node.P.Y, best_solution->back().RAT,      \
+        best_solution->back().Capacity);                                       \
+  } while (false)
+
+#else
+
+#define LOG(...)
+#define LOG_NODE(nodeid, solutions)
+
+#endif
+
 static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
   auto points = edge.Ps;
   if (points.front() == points.back())
@@ -47,6 +70,10 @@ static void insert(SolutionTy &solution, unsigned length, PointTy position,
       wire.UnitR * length * capacity;
   NodeTy::FloatTy new_rat = rat - wire_delay;
   NodeTy::FloatTy new_capacity = capacity + wire.UnitC * length;
+
+  //  LOG("WIRE Insertion:\n\tRAT: %lf -> %lf\n\tCapacity: %lf -> %lf\n\n", rat,
+  //  new_rat, capacity, new_capacity);
+
   solution.emplace_back(new_capacity, new_rat, position, eid,
                         /*HasBuffer=*/false);
 }
@@ -60,6 +87,9 @@ void insert(SolutionTy &solution, const RCGraphTy G) {
   last_candidate.RAT -= buffer_delay;
   last_candidate.Capacity = buffer.C;
   last_candidate.HasBuffer = true;
+
+  //  LOG("BUFFER Insertion:\n\tRAT: %lf -> %lf\n\tCapacity: %lf -> %lf\n\n",
+  //  rat, last_candidate.RAT, capacity, last_candidate.Capacity);
 }
 
 static std::vector<SolutionTy>
@@ -204,6 +234,8 @@ SolutionTy bufferInsertion(const RCGraphTy &G, unsigned step) {
 
     auto solutions = mergeSolutions(children_solutions, G.getNode(top));
     solutions = redundancy_elimination(std::move(solutions));
+
+    LOG_NODE(G.getNode(top), solutions);
 
     if (top == G.getRoot()) {
       visited[top] = solutions;

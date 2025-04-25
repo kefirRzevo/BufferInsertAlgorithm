@@ -21,10 +21,10 @@ struct CandidateTy {
   friend std::ostream &operator<<(std::ostream &os,
                                   const CandidateTy &candidate) {
     os << "Buffer (" << candidate.P.X << " ," << candidate.P.Y << ")\n"
-       << "\t RAT == " << candidate.RAT << "\n"
-       << "\t Capacity == " << candidate.Capacity << "\n"
-       << "\t EdgeId == " << candidate.EId << "\n"
-       << "\t INSERT == " << candidate.HasBuffer;
+       << "\tRAT = " << candidate.RAT << "\n"
+       << "\tCapacity = " << candidate.Capacity << "\n"
+       << "\tEdgeId = " << candidate.EId << "\n"
+       << "\tINSERT = " << candidate.HasBuffer;
     return os;
   }
 };

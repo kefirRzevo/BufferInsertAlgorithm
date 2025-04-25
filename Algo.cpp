@@ -51,10 +51,12 @@ int main(int argc, const char *argv[]) {
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end - start);
     auto Solution = extractSolution(Candidates);
+
+    std::cout << "Buffers to insert START\n";
     for (auto &&Candidate : Solution) {
       std::cout << Candidate << "\n";
     }
-    std::cout << std::endl;
+    std::cout << "Buffers to insert END\n" << std::endl;
     NodeTy::FloatTy RAT = resultingRAT(Candidates);
     std::cout << "Resulting RAT = " << RAT << std::endl;
     std::cout << "Resulting AlgoTime = " << duration.count() << std::endl;
