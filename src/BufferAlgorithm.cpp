@@ -1,6 +1,4 @@
 #include "BufferAlgorithm.h"
-#include "Config.h"
-#include "RCGraph.h"
 
 #include <unordered_set>
 
@@ -37,12 +35,12 @@ static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
 }
 
 static void insert(SolutionTy &solution, unsigned length, PointTy position,
-                   EdgeTy::EdgeIdTy eid, const Config &config) {
+                   EdgeTy::EdgeIdTy eid, const RCGraphTy G) {
   auto &last_candidate = solution.back();
   auto rat = last_candidate.RAT;
   auto capacity = last_candidate.Capacity;
 
-  Technology wire = config.getTechnology();
+  Technology wire = G.getAttrs().getTechnology();
 
   NodeTy::FloatTy wire_delay =
       (wire.UnitR * wire.UnitC * (length * length)) / 2 +
@@ -53,11 +51,10 @@ static void insert(SolutionTy &solution, unsigned length, PointTy position,
                         /*HasBuffer=*/false);
 }
 
-void insert(SolutionTy &solution, PointTy position, EdgeTy::EdgeIdTy eid,
-            const Config &config) {
+void insert(SolutionTy &solution, const RCGraphTy G) {
   auto &last_candidate = solution.back();
 
-  Module buffer = config.getModule(ModuleKind::Buffer);
+  Module buffer = G.getAttrs().getModule(ModuleKind::Buffer);
 
   NodeTy::FloatTy buffer_delay = buffer.K + buffer.R * last_candidate.Capacity;
   last_candidate.RAT -= buffer_delay;
@@ -131,7 +128,7 @@ mergeTwoSolutions(const std::vector<SolutionTy> &lhs,
 
       solution.emplace_back(lhs_candidate.Capacity + rhs_candidate.Capacity,
                             std::min(lhs_candidate.RAT, rhs_candidate.RAT),
-                            position, RCGraphInterface::invalidEdgeId(), false);
+                            position, RCGraphTy::invalidEdgeId(), false);
       solutions.push_back(solution);
     }
   }
@@ -143,9 +140,8 @@ mergeSolutions(const std::vector<std::vector<SolutionTy>> &children_solutions,
                const NodeTy &node) {
   if (node.Kind == NodeKindTy::Point) {
     assert(children_solutions.empty());
-    return std::vector<SolutionTy>{
-        SolutionTy{{node.Capacity, node.RAT, node.P,
-                    RCGraphInterface::invalidEdgeId(), false}}};
+    return std::vector<SolutionTy>{SolutionTy{
+        {node.Capacity, node.RAT, node.P, RCGraphTy::invalidEdgeId(), false}}};
   }
 
   for (auto &solutions : children_solutions)
@@ -179,11 +175,10 @@ mergeSolutions(const std::vector<std::vector<SolutionTy>> &children_solutions,
 
 namespace algo {
 
-SolutionTy bufferInsertion(const RCGraph &G, const Config &config,
-                           unsigned step) {
+SolutionTy bufferInsertion(const RCGraphTy &G, unsigned step) {
   std::vector<NodeTy::NodeIdTy> backtrack{G.getRoot()};
   std::unordered_map<NodeTy::NodeIdTy, std::vector<SolutionTy>> visited{
-      {RCGraphInterface::invalidNodeId(), {}}};
+      {RCGraphTy::invalidNodeId(), {}}};
 
   while (!backtrack.empty()) {
     auto top = backtrack.back();
@@ -223,13 +218,13 @@ SolutionTy bufferInsertion(const RCGraph &G, const Config &config,
       auto last_candidate = solutions.back().back();
       unsigned length = last_candidate.P.distance(point);
       for (auto &solution : solutions)
-        insert(solution, length, point, edge_id, config);
+        insert(solution, length, point, edge_id, G);
 
       solutions = redundancy_elimination(std::move(solutions));
 
       auto copy_solutions = solutions;
       for (auto &copy_solution : copy_solutions)
-        insert(copy_solution, point, edge_id, config);
+        insert(copy_solution, G);
 
       std::move(copy_solutions.begin(), copy_solutions.end(),
                 std::back_inserter(solutions));

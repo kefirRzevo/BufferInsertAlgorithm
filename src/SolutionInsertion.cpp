@@ -67,9 +67,9 @@ static std::vector<PointsTy> splitPoints(const PointsTy &Points,
 
 namespace algo {
 
-void insertSolution(const SolutionTy &Solution, RCGraph &G) {
-  using NodeIdTy = RCGraph::NodeIdTy;
-  using EdgeIdTy = RCGraph::EdgeIdTy;
+void insertSolution(const SolutionTy &Solution, RCGraphTy &G) {
+  using NodeIdTy = RCGraphTy::NodeIdTy;
+  using EdgeIdTy = RCGraphTy::EdgeIdTy;
 
   std::unordered_map<EdgeIdTy, SolutionTy> Grouped;
   for (auto &&S : Solution) {
@@ -77,7 +77,6 @@ void insertSolution(const SolutionTy &Solution, RCGraph &G) {
     Group.push_back(S);
   }
 
-  int Counter = 0;
   for (auto &&[EId, Sols] : Grouped) {
     // Sorting solution
     const auto &Edge = G.getEdge(EId);
@@ -95,9 +94,10 @@ void insertSolution(const SolutionTy &Solution, RCGraph &G) {
     // Fixing nodes
     std::vector<NodeIdTy> Nodes;
     Nodes.push_back(First);
+    const Module &M = G.getAttrs().getModule(ModuleKind::Buffer);
     for (auto &&Solution : Solutions) {
       auto Node = NodeTy{.Kind = NodeKindTy::Buffer,
-                         .Name = "inserted " + std::to_string(Counter++),
+                         .Name = M.Name,
                          .P = Solution.P,
                          .Capacity = Solution.Capacity,
                          .RAT = Solution.RAT};

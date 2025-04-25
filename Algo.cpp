@@ -4,9 +4,9 @@
 #include "RCGraph.h"
 #include "SolutionInsertion.h"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
-#include <chrono>
 
 using namespace algo;
 
@@ -15,7 +15,8 @@ static std::string getOutputFilePath(std::string_view Input) {
 
   auto InputPath = fs::path{Input};
   auto Stem = std::string(InputPath.stem());
-  return fs::current_path() / (Stem + "_out.json");
+  auto ResPath = fs::current_path() / (Stem + "_out.json");
+  return ResPath.string();
 }
 
 static SolutionTy extractSolution(const SolutionTy &Candidates) {
@@ -44,8 +45,9 @@ int main(int argc, const char *argv[]) {
     std::string TestFile = argv[2];
     std::ifstream TestIS{TestFile};
     auto G = readRCGraph(TestIS);
+    G.setAttrs(std::move(Cfg));
     auto start = high_resolution_clock::now();
-    auto Candidates = bufferInsertion(G, Cfg);
+    auto Candidates = bufferInsertion(G);
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<milliseconds>(end - start);
     auto Solution = extractSolution(Candidates);

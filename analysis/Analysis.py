@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 average = 5
-max_len = 500
+max_len = 2000
 
 repo_path = Path(__file__).parent.parent
 tech_path = repo_path / "tests" / "tech1.json"
@@ -60,7 +60,7 @@ def run_command(cmd: list[str]) -> str:
         " ".join(cmd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=repo_path,
+        cwd=json_dir_path,
         text=True,
         shell=True,
     )

@@ -1,11 +1,10 @@
 #pragma once
 
 #include "BufferAlgorithm.h"
+#include "RCGraph.h"
 
 namespace algo {
 
-class RCGraph;
-
-void insertSolution(const SolutionTy &Solution, RCGraph &G);
+void insertSolution(const SolutionTy &Solution, RCGraphTy &G);
 
 } // namespace algo

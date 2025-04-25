@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Config.h"
 #include "RCGraph.h"
 
 #include <vector>
@@ -32,7 +31,6 @@ struct CandidateTy {
 
 using SolutionTy = std::vector<CandidateTy>;
 
-SolutionTy bufferInsertion(const RCGraph &G, const Config &config,
-                           unsigned step = 1);
+SolutionTy bufferInsertion(const RCGraphTy &G, unsigned step = 1);
 
 } // namespace algo

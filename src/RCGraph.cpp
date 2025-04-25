@@ -30,13 +30,13 @@ static NodeKindTy fromString(std::string_view S) {
   }
 }
 
-RCGraph readRCGraph(std::istream &IS) {
-  using CoordTy = RCGraphInterface::CoordTy;
-  using NodeIdTy = RCGraphInterface::NodeIdTy;
-  using FloatTy = RCGraphInterface::FloatTy;
-  using EdgeIdTy = RCGraphInterface::EdgeIdTy;
+using NodeIdTy = RCGraphTy::NodeIdTy;
+using EdgeIdTy = RCGraphTy::EdgeIdTy;
+using CoordTy = PointTy::CoordTy;
+using FloatTy = NodeTy::FloatTy;
 
-  RCGraph G;
+RCGraphTy readRCGraph(std::istream &IS) {
+  RCGraphTy G;
   std::unordered_map<int, NodeIdTy> NodeMapping;
   std::unordered_map<int, EdgeIdTy> EdgeMapping;
   auto DataObj = nlohmann::json{};
@@ -122,10 +122,8 @@ RCGraph readRCGraph(std::istream &IS) {
   return G;
 }
 
-static void collect(const RCGraph &G, std::vector<RCGraph::NodeIdTy> &NIds,
-                    std::vector<RCGraph::NodeIdTy> &EIds) {
-  using NodeIdTy = RCGraphInterface::NodeIdTy;
-
+static void collect(const RCGraphTy &G, std::vector<NodeIdTy> &NIds,
+                    std::vector<NodeIdTy> &EIds) {
   std::vector<NodeIdTy> CurNIds;
   NodeIdTy Root = G.getRoot();
   CurNIds.push_back(Root);
@@ -143,11 +141,7 @@ static void collect(const RCGraph &G, std::vector<RCGraph::NodeIdTy> &NIds,
   }
 }
 
-static void printNode(const RCGraph &G, RCGraph::NodeIdTy NId,
-                      std::ostream &OS) {
-  using NodeIdTy = RCGraph::NodeIdTy;
-  using EdgeIdTy = RCGraph::EdgeIdTy;
-
+static void printNodes(const RCGraphTy &G, std::ostream &OS) {
   auto PrintPoint = [](const PointTy &P) {
     std::string Res =
         "{" + std::to_string(P.X) + ", " + std::to_string(P.Y) + "}";
@@ -180,18 +174,14 @@ static void printNode(const RCGraph &G, RCGraph::NodeIdTy NId,
   }
 }
 
-void dumpDot(const RCGraph &G, std::ostream &OS) {
+void dumpDot(const RCGraphTy &G, std::ostream &OS) {
   OS << "digraph {\n";
   OS << "\tnode[style=filled, fontcolor=black];\n";
-  auto RootId = G.getRoot();
-  printNode(G, RootId, OS);
+  printNodes(G, OS);
   OS << "}" << std::endl;
 }
 
-void writeRCGraph(const RCGraph &G, std::ostream &OS) {
-  using NodeIdTy = RCGraph::NodeIdTy;
-  using EdgeIdTy = RCGraph::EdgeIdTy;
-
+void writeRCGraph(const RCGraphTy &G, std::ostream &OS) {
   std::vector<NodeIdTy> NIds;
   std::vector<EdgeIdTy> EIds;
   collect(G, NIds, EIds);
