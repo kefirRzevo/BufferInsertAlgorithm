@@ -12,7 +12,10 @@ set (Sources
 add_executable (${PROJECT_NAME} ${Sources})
 
 if(MSVC)
-  target_compile_options(${PROJECT_NAME} PRIVATE -O3 /W4 /WX)
+  set (COMPILE_OPTIONS "/W4;/WX")
+  set (RELEASE_COMPILE_OPTIONS "${COMPILE_OPTIONS};/O2")
+  target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:RELEASE>:${RELEASE_COMPILE_OPTIONS}>")
+  target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:DEBUG>:${DEBUG_COMPILE_OPTIONS}>")
 else()
   target_compile_options(${PROJECT_NAME} PRIVATE -O3 -Wall -Wextra -Wpedantic)
 endif()

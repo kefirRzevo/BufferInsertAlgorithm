@@ -16,7 +16,7 @@ struct PointRecord final {
   PointTy Start;
   PointTy P;
 
-  bool operator=(const PointRecord &RHS) const {
+  bool operator==(const PointRecord &RHS) const {
     return Start.distance(P) == RHS.Start.distance(RHS.P);
   }
 
@@ -95,12 +95,12 @@ void insertSolution(const SolutionTy &Solution, RCGraphTy &G) {
     std::vector<NodeIdTy> Nodes;
     Nodes.push_back(First);
     const Module &M = G.getAttrs().getModule(ModuleKind::Buffer);
-    for (auto &&Solution : Solutions) {
+    for (auto &&S : Solutions) {
       auto Node = NodeTy{.Kind = NodeKindTy::Buffer,
                          .Name = M.Name,
-                         .P = Solution.P,
-                         .Capacity = Solution.Capacity,
-                         .RAT = Solution.RAT};
+                         .P = S.P,
+                         .Capacity = S.Capacity,
+                         .RAT = S.RAT};
       auto NId = G.addNode(std::move(Node));
       Nodes.push_back(NId);
     }

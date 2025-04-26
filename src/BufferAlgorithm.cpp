@@ -39,12 +39,12 @@ static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
 
   while (rhs_it != points.rend()) {
     if (lhs_it->X != rhs_it->X) {
-      int adjustment = (rhs_it->X > lhs_it->X) ? step : -step;
+      int adjustment = (rhs_it->X > lhs_it->X) ? step : -static_cast<int>(step);
       for (PointTy::CoordTy cnt = 1; cnt < (rhs_it->X - lhs_it->X) / adjustment;
            ++cnt)
         candidates.emplace_back(lhs_it->X + cnt * adjustment, lhs_it->Y);
     } else {
-      int adjustment = (rhs_it->Y > lhs_it->Y) ? step : -step;
+      int adjustment = (rhs_it->Y > lhs_it->Y) ? step : -static_cast<int>(step);
       for (PointTy::CoordTy cnt = 1; cnt < (rhs_it->Y - lhs_it->Y) / adjustment;
            ++cnt)
         candidates.emplace_back(lhs_it->X, lhs_it->Y + cnt * adjustment);
@@ -174,8 +174,8 @@ mergeSolutions(const std::vector<std::vector<SolutionTy>> &children_solutions,
         {node.Capacity, node.RAT, node.P, RCGraphTy::invalidEdgeId(), false}}};
   }
 
-  for (auto &solutions : children_solutions)
-    assert(!solutions.empty());
+  assert(std::all_of(children_solutions.begin(), children_solutions.end(),
+                     [](const auto &solution) { return !solution.empty(); }));
 
   if (children_solutions.size() == 1)
     return children_solutions.front();

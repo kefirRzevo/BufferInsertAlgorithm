@@ -14,7 +14,7 @@ static std::string getOutputFilePath(std::string_view Input) {
   namespace fs = std::filesystem;
 
   auto InputPath = fs::path{Input};
-  auto Stem = std::string(InputPath.stem());
+  auto Stem = InputPath.stem().string();
   auto ResPath = fs::current_path() / (Stem + "_out.json");
   return ResPath.string();
 }
