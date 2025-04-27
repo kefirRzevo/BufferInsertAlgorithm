@@ -238,8 +238,15 @@ SolutionTy bufferInsertion(const RCGraphTy &G, unsigned step) {
     LOG_NODE(G.getNode(top), solutions);
 
     if (top == G.getRoot()) {
+      for (auto &solution : solutions) {
+        insert(solution, G);
+        solution.back().HasBuffer = false;
+      }
       visited[top] = solutions;
+
       backtrack.pop_back();
+      assert(backtrack.empty());
+
       continue;
     }
 
