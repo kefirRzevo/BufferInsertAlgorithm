@@ -31,20 +31,26 @@ static std::vector<PointsTy> splitPoints(const PointsTy &Points,
   assert(Solutions.size() > 0);
 
   auto Start = Points.front();
-  std::set<PointRecord> Records;
+  std::set<PointRecord> RecordsSet;
   std::transform(Solutions.begin(), Solutions.end(),
-                 std::inserter(Records, Records.begin()),
+                 std::inserter(RecordsSet, RecordsSet.begin()),
                  [&](auto &&Candidate) {
                    return PointRecord{.Kind = PointKind::Buffer,
                                       .Start = Start,
                                       .P = Candidate.P};
                  });
-  for (auto &&P : Points) {
-    auto Tmp = PointRecord{.Kind = PointKind::Simple, .Start = Start, .P = P};
-    if (Records.find(Tmp) == Records.end()) {
-      Records.insert(std::move(Tmp));
+  for (auto PIt = std::next(Points.begin()); PIt != std::prev(Points.end());
+       ++PIt) {
+    auto Tmp =
+        PointRecord{.Kind = PointKind::Simple, .Start = Start, .P = *PIt};
+    if (RecordsSet.find(Tmp) == RecordsSet.end()) {
+      RecordsSet.insert(std::move(Tmp));
     }
   }
+  std::vector<PointRecord> Records;
+  Records.emplace_back(PointKind::Simple, Start, Points.front());
+  Records.insert(Records.end(), RecordsSet.begin(), RecordsSet.end());
+  Records.emplace_back(PointKind::Simple, Start, Points.back());
 
   std::vector<PointsTy> Res;
   auto PrevRecordIt = Records.begin();
@@ -54,6 +60,7 @@ static std::vector<PointsTy> splitPoints(const PointsTy &Points,
       std::transform(PrevRecordIt, std::next(RecordIt),
                      std::back_inserter(CurPoints),
                      [&](auto &&RecIt) { return RecIt.P; });
+      assert(CurPoints.size() > 1);
       Res.emplace_back(std::move(CurPoints));
       PrevRecordIt = RecordIt;
     }

@@ -169,8 +169,8 @@ static void printNodes(const RCGraphTy &G, std::ostream &OS) {
     const EdgeTy &Edge = G.getEdge(EId);
     NodeIdTy First = G.getEdgeNodeFirst(EId);
     NodeIdTy Last = G.getEdgeNodeLast(EId);
-    OS << "\tnode_" << First << " -> node_" << Last << "[label = \""
-       << PrintPoints(Edge.Ps) << "\"];\n";
+    OS << "\tnode_" << First << " -> node_" << Last << "[label = \"Id " << EId
+       << ";Ps " << PrintPoints(Edge.Ps) << "\"];\n";
   }
 }
 

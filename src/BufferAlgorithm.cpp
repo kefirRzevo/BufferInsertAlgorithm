@@ -28,7 +28,7 @@ using namespace algo;
 #endif
 
 static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
-  auto points = edge.Ps;
+  const auto &points = edge.Ps;
   if (points.front() == points.back())
     return {};
 
@@ -58,7 +58,7 @@ static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
 }
 
 static void insert(SolutionTy &solution, unsigned length, PointTy position,
-                   EdgeTy::EdgeIdTy eid, const RCGraphTy G) {
+                   EdgeTy::EdgeIdTy eid, const RCGraphTy &G) {
   auto &last_candidate = solution.back();
   auto rat = last_candidate.RAT;
   auto capacity = last_candidate.Capacity;
@@ -78,7 +78,7 @@ static void insert(SolutionTy &solution, unsigned length, PointTy position,
                         /*HasBuffer=*/false);
 }
 
-void insert(SolutionTy &solution, const RCGraphTy G) {
+void insert(SolutionTy &solution, const RCGraphTy &G) {
   auto &last_candidate = solution.back();
 
   Module buffer = G.getAttrs().getModule(ModuleKind::Buffer);
@@ -184,21 +184,11 @@ mergeSolutions(const std::vector<std::vector<SolutionTy>> &children_solutions,
     return mergeTwoSolutions(children_solutions.front(),
                              children_solutions.back(), node.P);
 
-  std::vector<SolutionTy> solutions;
-  for (auto current_child = std::prev(children_solutions.end());
-       current_child != children_solutions.begin(); --current_child) {
-    std::vector<SolutionTy> current_solutions = *current_child;
-
-    std::vector<SolutionTy> other_solutions;
-    std::for_each(children_solutions.begin(), current_child,
-                  [&other_solutions](const auto &solutions) {
-                    std::copy(solutions.begin(), solutions.end(),
-                              std::back_inserter(other_solutions));
-                  });
-
-    auto solution =
-        mergeTwoSolutions(current_solutions, other_solutions, node.P);
-    std::move(solution.begin(), solution.end(), std::back_inserter(solutions));
+  std::vector<SolutionTy> solutions = *children_solutions.begin();
+  for (auto current_child = std::next(children_solutions.begin());
+       current_child != children_solutions.end(); ++current_child) {
+    solutions = mergeTwoSolutions(std::move(solutions), *current_child, node.P);
+    solutions = redundancy_elimination(std::move(solutions));
   }
   return solutions;
 }
