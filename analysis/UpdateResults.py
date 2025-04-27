@@ -15,7 +15,7 @@ def run_command(cmd: list[str]) -> str:
         " ".join(cmd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=repo_path,
+        cwd=results_dir_path,
         text=True,
         shell=True,
     )

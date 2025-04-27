@@ -5,14 +5,13 @@ import re
 import json
 from pathlib import Path
 
-average = 5
-max_len = 2000
+average = 10
+max_len = 1000
 
 repo_path = Path(__file__).parent.parent
 tech_path = repo_path / "tests" / "tech1.json"
-json_dir_path = repo_path / "build"
-runtime_plot_path = repo_path / "res" / "runtime.png"
-delay_plot_path = repo_path / "res" / "delay.png"
+build_path = repo_path / "build"
+results_plot_path = repo_path / "res" / "results.png"
 table_path = repo_path / "res" / "table.txt"
 prog_path = repo_path / "build" / "BufferInserter"
 
@@ -49,7 +48,7 @@ def prepare_data(len: int) -> Path:
             },
         ],
     }
-    file_path = json_dir_path / f"test{len}.json"
+    file_path = build_path / f"test{len}.json"
     string = json.dumps(data, indent="  ")
     file_path.write_text(string, encoding="UTF-8")
     return file_path
@@ -60,7 +59,7 @@ def run_command(cmd: list[str]) -> str:
         " ".join(cmd),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        cwd=json_dir_path,
+        cwd=build_path,
         text=True,
         shell=True,
     )
@@ -89,7 +88,7 @@ def get_results(n: int = 12) -> list[TestResult]:
     test_results = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=n) as executor:
         futures = {
-            executor.submit(get_result, length): length for length in range(1, max_len, 100)
+            executor.submit(get_result, length): length for length in range(25, max_len, 100)
         }
         for future in concurrent.futures.as_completed(futures):
             try:
@@ -121,23 +120,18 @@ def plot_results(test_results: list[TestResult]) -> None:
     lens = [result.len for result in test_results]
     times = [result.time for result in test_results]
     rats = [result.rat for result in test_results]
-    plt.figure(figsize=(5, 5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-    plt.plot(lens, rats, marker="o", color="blue")
-    plt.title("RAT(len)")
-    plt.xlabel("Length")
-    plt.ylabel("RAT")
-    plt.grid()
-    plt.savefig(delay_plot_path)
-    plt.close()
+    ax1.plot(lens, rats, marker="o", color="blue")
+    ax1.set_title("RAT(len)")
+    ax1.set(xlabel="Length", ylabel="RAT")
+    ax1.grid()
 
-    plt.plot(lens, times, marker="o", color="orange")
-    plt.title("Time(len)")
-    plt.xlabel("Length")
-    plt.ylabel("Time")
-    plt.grid()
-    plt.savefig(runtime_plot_path)
-    plt.close()
+    ax2.plot(lens, times, marker="o", color="orange")
+    ax2.set_title("Time(len)")
+    ax2.set(xlabel="Length", ylabel="Time")
+    ax2.grid()
+    plt.savefig(results_plot_path)
 
 
 def main():
