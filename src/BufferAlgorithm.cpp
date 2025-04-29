@@ -29,9 +29,6 @@ using namespace algo;
 
 static PointsTy splitEdge(const EdgeTy &edge, unsigned step) {
   const auto &points = edge.Ps;
-  if (points.front() == points.back())
-    return {};
-
   PointsTy candidates;
 
   auto lhs_it = points.rbegin();
